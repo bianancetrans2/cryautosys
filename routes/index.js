@@ -468,7 +468,7 @@ router.get('/intraday', async function (req, res) {
 
         // Map the response to human-readable format
         const formattedData = ohlcv.map(data => ({
-          date: data[0].toString(),
+          date: moment(data[0]).tz('Asia/Kolkata').format(),
           open: data[1],
           high: data[2],
           low: data[3],
@@ -476,6 +476,7 @@ router.get('/intraday', async function (req, res) {
           vol: data[5],
           oi:0
         }));
+        formattedData.sort((a, b) => new Date(b.date) - new Date(a.date));
         return formattedData;
       },
     ]);
