@@ -175,6 +175,36 @@ const bybitClient1 = new ccxt.bybit({
   }
 });
 
+
+router.get('/login', function (req, res) {
+  async.waterfall([
+    function (nextCall) {
+      let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
+      connection.query(sqlsss, async function (err, appData) {
+        if (err) {
+          await teleStockMsg("---> Bybit login failed");
+        } else {
+          await teleStockMsg("---> Bybit login sucessfully");
+          nextCall(null, appData);
+        }
+      })
+    },
+  ], function (err, response) {
+    if (err) {
+      return res.send({
+        status_api: err.code ? err.code : 400,
+        message: (err && err.message) || "someyhing went wrong",
+        data: err.data ? err.data : null
+      });
+    }
+    return res.send({
+      status_api: 200,
+      message: "Auth generate successfully",
+      data: response
+    });
+  });
+});
+
 async function takeProfitOrder(data) {
   try {
     data?.accountType === 'spot'? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
@@ -354,7 +384,7 @@ function deleteRecord(){
 
 function testServer(){   
   request({
-    uri: "https://cryjigartest.onrender.com/",
+    uri: "https://cryautomation.onrender.com/",
     method: "GET",
   }, (err, response, body) => {
     console.log('body: ', body);
