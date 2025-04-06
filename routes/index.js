@@ -449,6 +449,57 @@ router.get('/bybitFetchBalance', async function (req, res) {
 });
 
 /** bybit api token data */
+router.get('/intraday', async function (req, res) {
+  try {
+    req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
+    const bybitBalance = await async.waterfall([
+      async function () {
+        const symbol = req.query?.instrumentKey;
+        const timeframe = "1m"; // 1 day interval
+        const limit = 5000; // 30 days
+        // const symbol = req.query?.symbol;
+        // const timeframe = req.query?.timeframe; // 1 day interval
+        // const limit = Number(req.query?.limit); // 30 days
+
+        // Fetch OHLCV (Open/High/Low/Close/Volume) data
+        // const ohlcv =  req.query?.accountType === 'spot' ? await bybitClient.fetchOHLCV(symbol, timeframe, undefined, limit) : await bybitClient1.fetchOHLCV(symbol, timeframe, undefined, limit);
+        let pageLimit = req.query?.pages ?  req.query?.pages : 1
+        const ohlcv = req.query?.accountType === 'spot' ? await bybitClient.fetchOHLCV(symbol, timeframe, undefined, limit,params = {"paginate": true, "paginationCalls": pageLimit}) : await bybitClient1.fetchOHLCV(symbol, timeframe, undefined, limit,params = {"paginate": true, "paginationCalls": pageLimit});
+
+        // Map the response to human-readable format
+        const formattedData = ohlcv.map(data => ({
+          date: data[0].toString(),
+          open: data[1],
+          high: data[2],
+          low: data[3],
+          close: data[4],
+          vol: data[5],
+          oi:0
+        }));
+        return formattedData;
+      },
+    ]);
+    res.send({
+      status_api: 200,
+      message: 'VVV Bybit api token data fetch successfully',
+      data:{
+       "status":"success", 
+       "data":{
+        "candles" :bybitBalance
+       } 
+      } ,
+    });
+  } catch (err) {
+    await teleStockMsg("---> VVV Bybit api token data featch failed");
+    res.send({
+      status_api: err.code ? err.code : 400,
+      message: (err && err.message) || 'Something went wrong',
+      data: err.data ? err.data : null,
+    });
+  }
+});
+
+/** bybit api token data */
 router.get('/historical-data', async function (req, res) {
   try {
     req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
