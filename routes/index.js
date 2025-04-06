@@ -547,6 +547,120 @@ router.get('/historical-data', async function (req, res) {
 });
 
 /** bybit buy/sell data */
+router.get('/buySellApi', async function (req, res) {
+  try {
+    req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
+    // const openOrders = req.query?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(req.query?.instrument_token) : await bybitClient1.fetchOpenOrders(req.query?.instrument_token);
+    // if (openOrders.length != 0) {
+    //   const canceledOrders = await Promise.all(
+    //     openOrders.map(async order => {
+    //       if(order?.info?.stopOrderType == "Stop"){
+    //       const canceledOrder = req.query?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, req.query?.instrument_token) : await bybitClient1.cancelOrder(order.id, req.query?.instrument_token);
+    //       return canceledOrder;
+    //       }
+    //     })
+    //   );
+    // }
+    // let openOrdersData0 = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
+    // if(openOrdersData0.info.side != '' && openOrdersData0.info.side.toLowerCase() != req.query?.transaction_type){
+    //   let getValue = (((openOrdersData0.unrealizedPnl/openOrdersData0.contracts)*100)/openOrdersData0.entryPrice).toFixed(6);
+    //   console.log('getValue: ', getValue);
+    //   if(Number(getValue)< 0.4 ){
+    //     let positionDirection1 = openOrdersData0.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
+    //     let openOrdersData02 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData0.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData0.info.size, 0) : await bybitClient1.createOrder(openOrdersData0.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData0.info.size, 0);
+    //     console.log('openOrdersData02: ', openOrdersData02);
+    //   }
+    // }
+    if(req.query?.leverage && Number(req.query?.leverage) != 0){
+      await bybitClient1.setLeverage(Number(req.query?.leverage),req.query?.instrument_token,{"marginMode": req.query?.margin_mode})
+    }
+    let finalDateTime =  moment.tz('Asia/Kolkata').format('DD-MM-YYYY HH:mm ss:SSS');
+    // let orderData =  req.query?.accountType === 'spot' ? await bybitClient.fetchTicker(req.query?.instrument_token) : await bybitClient1.fetchTicker(req.query?.instrument_token);
+    // let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(orderData.info.markPrice,req.query?.entry_offset) :  calculateSellTPSL(orderData.info.markPrice,req.query?.entry_offset);
+    // let openOrderQty;
+    // let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
+    // let positionDirection = openOrdersData.info.side;
+    // if(req.query?.position_size && (Number(req.query?.position_size) != 0)){
+    //   openOrderQty = Number(req.query?.position_size) + Number(openOrdersData.contracts);
+    // }else{
+    //  let openOrderQty = Number(req.query?.quantity) + Number(openOrdersData.info.size);
+     let openOrderQty = Number(req.query?.quantity);
+    // }
+  //  if(positionDirection.toLowerCase() != req.query?.transaction_type){
+    const bybitBalance = await async.waterfall([
+      async function () {
+        let symbol = req.query?.instrument_token;
+        // let trigger_percent = req.query?.trigger_predication;
+        let type = "market"; // or 'MARKET' or 'LIMIT'
+        let side = req.query?.transaction_type; // or 'SELL' or 'BUY'
+        let price = Number(finalPrice.toFixed(6)); 
+        let quantity = Number(openOrderQty); 
+
+        // Fetch OHLCV (Open/High/Low/Close/Volume) data
+        let order;
+        // if(req.query?.sl_price && (Number(req.query?.sl_price) != 0)){
+        //   // let triggerPriceData = req.query?.transaction_type=='sell' ?  calculateBuyTPSL(finalPrice,trigger_percent) :  calculateSellTPSL(finalPrice,trigger_percent);
+        //   let sltriggerPriceData = req.query?.transaction_type=='sell' ?   calculateBuyTPSL(finalPrice,req.query?.sl_price) :  calculateSellTPSL(finalPrice,req.query?.sl_price);
+        //   let params = {
+        //     // 'triggerPrice': Number(triggerPriceData.toFixed(6)),
+        //     // 'triggerDirection':req.query?.transaction_type=='buy' ? 'above' : 'below',
+        //     'stopLoss': {
+        //       'type': 'limit', // or 'market', this field is not necessary if limit price is specified
+        //       'triggerPrice': Number(sltriggerPriceData.toFixed(6)),
+        //     },
+        //     // marginMode: req.query?.margin_mode
+        //   };
+          order = req.query?.accountType === 'spot' ? await bybitClient.createOrder(symbol, type, side, quantity, 0) : await bybitClient1.createOrder(symbol, type, side, quantity, 0) ;
+        // }else{
+        //   let triggerPriceData = req.query?.transaction_type=='sell' ?  calculateBuyTPSL(finalPrice,trigger_percent) :  calculateSellTPSL(finalPrice,trigger_percent);
+        //   let params = {
+        //     // 'triggerPrice': Number(triggerPriceData.toFixed(6)),
+        //     // 'triggerDirection':req.query?.transaction_type=='buy' ? 'above' : 'below',
+        //     // marginMode: req.query?.margin_mode,
+        //     // tpslMode:'partial'
+        //   };
+        //   order =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(symbol, type, side, quantity, price, params) : await bybitClient1.createOrder(symbol, type, side, quantity, price, params);
+        // }
+        let html = '<b>Account Id : </b> vijay <b>[Bybit]</b> \n\n' +
+            '🔀 <b>Direction : </b> <b> ' + req.query.transaction_type.toUpperCase() + '</b>'+(req.query.transaction_type == 'buy'? '🟢' : '🔴')+'\n' +
+            '🌐 <b>Script : </b> ' + req.query.instrument_token + '\n' +
+            // '💰 <b>Price : ₹</b> ' + finalPrice + '\n' +
+            '🚫 <b>Qty : </b> ' + openOrderQty + '\n' +
+            '📈 <b>Mode : </b> market \n' +
+            '🕙 <b>Trade Time : </b> ' + finalDateTime + '\n' ;
+          await teleStockMsg(html);
+          req.query.finalPrice = finalPrice;
+          req.query.openOrderQty = openOrderQty;
+          req.query.finalOrderQty = Number(req.query?.quantity);
+          req.query.order_id = order.id;
+          // await orderBookDb(req.query);
+          return order;
+      },
+    ]);
+    await teleStockMsg("VVV Bybit api buy/sell api featch successfully");
+    res.send({
+      status_api: 200,
+      message: 'VVV Bybit api buy/sell api featch successfully',
+      data: bybitBalance,
+    });
+  // }else{
+  //   await teleStockMsg("VVV Bybit api buy/sell api fire but not order");
+  //   res.send({
+  //     status_api: 200,
+  //     message: 'VVV Bybit api buy/sell api fire but not order',
+  //     data: '',
+  //   });
+  // }
+  } catch (err) {
+    await teleStockMsg("---> VVV Bybit api buy/sell api featch failed");
+    res.send({
+      status_api: err.code ? err.code : 400,
+      message: (err && err.message) || 'Something went wrong',
+      data: err.data ? err.data : null,
+    });
+  }
+});
+
 router.get('/buySellApi2', async function (req, res) {
   try {
     req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
