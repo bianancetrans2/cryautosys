@@ -593,7 +593,7 @@ router.get('/buySellApi', async function (req, res) {
         // let trigger_percent = req.query?.trigger_predication;
         let type = "market"; // or 'MARKET' or 'LIMIT'
         let side = req.query?.transaction_type; // or 'SELL' or 'BUY'
-        let price = Number(finalPrice.toFixed(6)); 
+        // let price = Number(finalPrice.toFixed(6)); 
         let quantity = Number(openOrderQty); 
 
         // Fetch OHLCV (Open/High/Low/Close/Volume) data
@@ -629,7 +629,7 @@ router.get('/buySellApi', async function (req, res) {
             '📈 <b>Mode : </b> market \n' +
             '🕙 <b>Trade Time : </b> ' + finalDateTime + '\n' ;
           await teleStockMsg(html);
-          req.query.finalPrice = finalPrice;
+          // req.query.finalPrice = finalPrice;
           req.query.openOrderQty = openOrderQty;
           req.query.finalOrderQty = Number(req.query?.quantity);
           req.query.order_id = order.id;
